@@ -71,8 +71,7 @@
 
 <script>
 import axios from 'axios'
-const API_URL = import.meta.env.VITE_API_URL;
-
+const API_URL = import.meta.env.VITE_API_URL
 export default {
   name: 'ChatInterface',
   data() {
@@ -140,7 +139,7 @@ export default {
     },
     async loadMemories() {
       try {
-        const response = await axios.get(`https://ai2.dreamground.net/api/memories/${this.conversationId}?limit=10`)
+        const response = await axios.get(`${API_URL}/api/memories/${this.conversationId}?limit=10`)
         this.memories = response.data
       } catch (error) {
         console.error('載入記憶錯誤:', error)
@@ -168,7 +167,6 @@ export default {
         const response = await axios.post(`${API_URL}/api/upload`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
-        
         this.uploadedFile = response.data.file_name
         this.messages.push({
           type: 'system',
