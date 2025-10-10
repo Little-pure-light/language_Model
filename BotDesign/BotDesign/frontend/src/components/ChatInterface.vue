@@ -71,6 +71,7 @@
 
 <script>
 import axios from 'axios'
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default {
   name: 'ChatInterface',
@@ -109,7 +110,7 @@ export default {
       this.scrollToBottom()
       
       try {
-        const response = await axios.post('/api/chat', {
+        const response = await axios.post(`${API_URL}/api/chat`, {
           user_message: userMessage,
           conversation_id: this.conversationId,
           user_id: this.userId
@@ -139,7 +140,7 @@ export default {
     },
     async loadMemories() {
       try {
-        const response = await axios.get(`https://ai2.dreamground.net/api/memories/${this.conversationId}?limit=10`)
+        const response = await axios.get(`https://ai2.dreamground.net/api/memories/${this.conversationId}?limit=10`);
         this.memories = response.data
       } catch (error) {
         console.error('載入記憶錯誤:', error)
@@ -147,7 +148,7 @@ export default {
     },
     async loadEmotionalStates() {
       try {
-        const response = await axios.get(`https://ai2.dreamground.net/api/emotional-states/${this.userId}?limit=5`)
+        const response = await axios.get(`${API_URL}/api/emotional-states/${this.userId}?limit=10`);
         this.emotionalStates = response.data
       } catch (error) {
         console.error('載入情緒狀態錯誤:', error)
@@ -164,8 +165,7 @@ export default {
       this.isLoading = true
       
       try {
-            
-        const response = await axios.post('https://ai2.dreamground.net/api/upload', formData, {
+        const response = await axios.post(`${API_URL}/api/upload`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
         
