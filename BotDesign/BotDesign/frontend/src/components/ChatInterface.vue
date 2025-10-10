@@ -139,7 +139,7 @@ export default {
     },
     async loadMemories() {
       try {
-        const response = await axios.get(`/api/memories/${this.conversationId}?limit=10`)
+        const response = await axios.get(`https://ai2.dreamground.net/api/memories/${this.conversationId}?limit=10`)
         this.memories = response.data
       } catch (error) {
         console.error('載入記憶錯誤:', error)
@@ -147,7 +147,7 @@ export default {
     },
     async loadEmotionalStates() {
       try {
-        const response = await axios.get(`/api/emotional-states/${this.userId}?limit=5`)
+        const response = await axios.get(`https://ai2.dreamground.net/api/emotional-states/${this.userId}?limit=5`)
         this.emotionalStates = response.data
       } catch (error) {
         console.error('載入情緒狀態錯誤:', error)
@@ -164,7 +164,8 @@ export default {
       this.isLoading = true
       
       try {
-        const response = await axios.post('/api/upload', formData, {
+            
+        const response = await axios.post('https://ai2.dreamground.net/api/upload', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
         
