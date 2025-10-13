@@ -28,6 +28,7 @@
         <button @click="sendMessage" :disabled="isLoading || !userInput.trim()">
           發送
         </button>
+        <div class="health-check-button"><button @click="openHealthCheck">健檢表</button></div>
       </div>
       
       <div class="file-upload-area">
@@ -213,6 +214,24 @@ export default {
   }
 }
 </script>
+.health-check-button {
+  padding: 10px 15px;
+  background: white;
+  border-top: 1px solid #dee2e6;
+  text-align: center;
+}
+.health-check-button button {
+  padding: 8px 16px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+.health-check-button button:hover {
+  background: #5a6268;
+}
 
 <style scoped>
 .chat-interface {
