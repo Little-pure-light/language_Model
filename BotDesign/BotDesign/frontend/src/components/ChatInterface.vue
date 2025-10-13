@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="chat-interface">
     <div class="chat-container">
@@ -28,9 +29,6 @@
         <button @click="sendMessage" :disabled="isLoading || !userInput.trim()">
           發送
         </button>
-        <div class="health-check-button">
-          <button @click="openHealthCheck">健檢表</button>
-        </div>
       </div>
       
       <div class="file-upload-area">
@@ -44,8 +42,8 @@
         <button @click="$refs.fileInput.click()" :disabled="isLoading">
           📎 上傳檔案
         </button>
-        <button @click="openStatusDashboard" :disabled="isLoading">
-          📊 狀態儀表板
+        <button @click="goToHealthCheck" :disabled="isLoading">
+          📋 健康檢查
         </button>
         <span v-if="uploadedFile" class="file-name">{{ uploadedFile }}</span>
       </div>
@@ -75,161 +73,152 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, nextTick } from 'vue'
+<script>
 import axios from 'axios'
-
 const API_URL = import.meta.env.VITE_API_URL
 
-// Reactive state
-const messages = ref([])
-const userInput = ref('')
-const isLoading = ref(false)
-const conversationId = ref(`conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
-const userId = ref(`user_${Date.now()}`)
-const memories = ref([])
-const emotionalStates = ref([])
-const uploadedFile = ref(null)
-const messagesArea = ref(null)
-
-// Methods
-const generateConversationId = () => {
-  return `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-}
-
-const sendMessage = async () => {
-  if (!userInput.value.trim()) return
-  
-  const userMessage = userInput.value.trim()
-  messages.value.push({
-    type: 'user',
-    content: userMessage,
-    timestamp: new Date().toLocaleTimeString('zh-TW')
-  })
-  
-  userInput.value = ''
-  isLoading.value = true
-  scrollToBottom()
-  
-  try {
-    const response = await axios.post(`${API_URL}/api/chat`, {
-      user_message: userMessage,
-      conversation_id: conversationId.value,
-      user_id: userId.value
-    })
-    
-    messages.value.push({
-      type: 'assistant',
-      content: response.data.assistant_message,
-      emotion: response.data.emotion_analysis,
-      timestamp: new Date().toLocaleTimeString('zh-TW')
-    })
-    
-    await Promise.all([loadMemories(), loadEmotionalStates()])
-  } catch (error) {
-    console.error('發送訊息錯誤:', error)
-    messages.value.push({
-      type: 'system',
-      content: '抱歉，發生錯誤了 😢',
-      timestamp: new Date().toLocaleTimeString('zh-TW')
-    })
-  } finally {
-    isLoading.value = false
-    scrollToBottom()
-  }
-}
-
-const loadMemories = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/api/memories/${conversationId.value}?limit=10`)
-    memories.value = response.data
-  } catch (error) {
-    console.error('載入記憶錯誤:', error)
-  }
-}
-
-const loadEmotionalStates = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/api/emotional-states/${userId.value}?limit=10`)
-    emotionalStates.value = response.data
-  } catch (error) {
-    console.error('載入情緒狀態錯誤:', error)
-  }
-}
-
-const handleFileUpload = async (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-  
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('conversation_id', conversationId.value)
-  
-  isLoading.value = true
-  
-  try {
-    const response = await axios.post(`${API_URL}/api/upload`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-    uploadedFile.value = response.data.file_name
-    messages.value.push({
-      type: 'system',
-      content: `✅ 檔案上傳成功: ${response.data.file_name}`,
-      timestamp: new Date().toLocaleTimeString('zh-TW')
-    })
-  } catch (error) {
-    console.error('檔案上傳錯誤:', error)
-    messages.value.push({
-      type: 'system',
-      content: '❌ 檔案上傳失敗',
-      timestamp: new Date().toLocaleTimeString('zh-TW')
-    })
-  } finally {
-    isLoading.value = false
-    scrollToBottom()
-  }
-}
-
-const openStatusDashboard = () => {
-  window.open('/status', '_blank')
-}
-
-const getEmotionEmoji = (emotion) => {
-  const emojis = {
-    joy: '😊',
-    sadness: '😢',
-    anger: '😠',
-    fear: '😰',
-    love: '💛',
-    tired: '😴',
-    confused: '🤔',
-    grateful: '🙏',
-    neutral: '😐'
-  }
-  return emojis[emotion] || '😊'
-}
-
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleString('zh-TW')
-}
-
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (messagesArea.value) {
-      messagesArea.value.scrollTop = messagesArea.value.scrollHeight
+export default {
+  name: 'ChatInterface',
+  data() {
+    return {
+      messages: [],
+      userInput: '',
+      isLoading: false,
+      conversationId: this.generateConversationId(),
+      userId: 'user_' + Date.now(),
+      memories: [],
+      emotionalStates: [],
+      uploadedFile: null
     }
-  })
+  },
+  mounted() {
+    this.loadMemories()
+    this.loadEmotionalStates()
+  },
+  methods: {
+    generateConversationId() {
+      return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+    },
+    async sendMessage() {
+      if (!this.userInput.trim()) return
+      
+      const userMessage = this.userInput.trim()
+      this.messages.push({
+        type: 'user',
+        content: userMessage,
+        timestamp: new Date().toLocaleTimeString('zh-TW')
+      })
+      
+      this.userInput = ''
+      this.isLoading = true
+      this.scrollToBottom()
+      
+      try {
+        const response = await axios.post(`${API_URL}/api/chat`, {
+          user_message: userMessage,
+          conversation_id: this.conversationId,
+          user_id: this.userId
+        })
+        
+        this.messages.push({
+          type: 'assistant',
+          content: response.data.assistant_message,
+          emotion: response.data.emotion_analysis,
+          timestamp: new Date().toLocaleTimeString('zh-TW')
+        })
+        
+        this.loadMemories()
+        this.loadEmotionalStates()
+      } catch (error) {
+        console.error('發送訊息錯誤:', error)
+        this.messages.push({
+          type: 'system',
+          content: '抱歉，發生錯誤了 😢',
+          timestamp: new Date().toLocaleTimeString('zh-TW')
+        })
+      } finally {
+        this.isLoading = false
+        this.scrollToBottom()
+      }
+    },
+    async loadMemories() {
+      try {
+        const response = await axios.get(`${API_URL}/api/memories/${this.conversationId}?limit=10`)
+        this.memories = response.data
+      } catch (error) {
+        console.error('載入記憶錯誤:', error)
+      }
+    },
+    async loadEmotionalStates() {
+      try {
+        const response = await axios.get(`${API_URL}/api/emotional-states/${this.userId}?limit=10`)
+        this.emotionalStates = response.data
+      } catch (error) {
+        console.error('載入情緒狀態錯誤:', error)
+      }
+    },
+    async handleFileUpload(event) {
+      const file = event.target.files[0]
+      if (!file) return
+      
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('conversation_id', this.conversationId)
+      
+      this.isLoading = true
+      
+      try {
+        const response = await axios.post(`${API_URL}/api/upload`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        this.uploadedFile = response.data.file_name
+        this.messages.push({
+          type: 'system',
+          content: `✅ 檔案上傳成功: ${response.data.file_name}`,
+          timestamp: new Date().toLocaleTimeString('zh-TW')
+        })
+      } catch (error) {
+        console.error('檔案上傳錯誤:', error)
+        this.messages.push({
+          type: 'system',
+          content: '❌ 檔案上傳失敗',
+          timestamp: new Date().toLocaleTimeString('zh-TW')
+        })
+      } finally {
+        this.isLoading = false
+        this.scrollToBottom()
+      }
+    },
+    goToHealthCheck() {
+      window.open('/status', '_blank')
+    },
+    getEmotionEmoji(emotion) {
+      const emojis = {
+        joy: '😊',
+        sadness: '😢',
+        anger: '😠',
+        fear: '😰',
+        love: '💛',
+        tired: '😴',
+        confused: '🤔',
+        grateful: '🙏',
+        neutral: '😐'
+      }
+      return emojis[emotion] || '😊'
+    },
+    formatDate(dateString) {
+      return new Date(dateString).toLocaleString('zh-TW')
+    },
+    scrollToBottom() {
+      this.$nextTick(() => {
+        const area = this.$refs.messagesArea
+        if (area) {
+          area.scrollTop = area.scrollHeight
+        }
+      })
+    }
+  }
 }
-
-const openHealthCheck = () => {
-  // Existing health check logic (unchanged)
-  window.open('/health-check', '_blank')
-}
-
-// Lifecycle hooks
-onMounted(() => {
-  Promise.all([loadMemories(), loadEmotionalStates()])
-})
 </script>
 
 <style scoped>
@@ -312,7 +301,7 @@ onMounted(() => {
   display: inline-block;
   margin-top: 5px;
   padding: 4px 8px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   font-size: 0.85em;
 }
@@ -467,24 +456,6 @@ onMounted(() => {
   height: 100%;
   background: linear-gradient(90deg, #667eea, #764ba2);
   transition: width 0.3s ease;
-}
-
-.health-check-button {
-  text-align: center;
-}
-
-.health-check-button button {
-  padding: 8px 16px;
-  background: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 15px;
-  cursor: pointer;
-  font-size: 0.9em;
-}
-
-.health-check-button button:hover:not(:disabled) {
-  background: #5a6268;
 }
 </style>
 ```
