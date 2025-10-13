@@ -6,7 +6,7 @@
     </header>
 
     <main class="app-main">
-      <router-view /> <!-- 根據路由動態顯示 ChatInterface 或 StatusPage -->
+      <router-view /> <!-- ✔ 根據路由動態顯示元件 -->
     </main>
   </div>
 </template>
@@ -18,7 +18,6 @@ export default {
 </script>
 
 <style>
-/* 你可以根據需要調整樣式 */
 .app-header {
   text-align: center;
   margin-top: 20px;
