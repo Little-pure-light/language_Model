@@ -52,3 +52,8 @@ externalPort = 8000
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[deployment]
+deploymentTarget = "vm"
+run = ["bash", "-c", "cd BotDesign/BotDesign && PYTHONPATH=. uvicorn backend.main:app --host 0.0.0.0 --port 8000 & cd frontend && npm run preview -- --host 0.0.0.0 --port 5000"]
+build = ["bash", "-c", "cd BotDesign/BotDesign/frontend && npm install && npm run build"]
