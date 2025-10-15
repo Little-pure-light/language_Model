@@ -1,43 +1,48 @@
+from dotenv import load_dotenv 
+load_dotenv() 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import logging
-import os
+
+# 引入 backend 資料夾下的各個 router
 from backend.chat_router import router as chat_router
 from backend.memory_router import router as memory_router
-from backend.file_upload import router as upload_router
+from backend.openai_handler import router as openai_router
+from backend.file_upload import router as file_upload_router
+from backend.healthcheck_router import router as health_router
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/backend.log'),
-        logging.StreamHandler()
-    ]
-)
+app = FastAPI()
 
-app = FastAPI(title="XiaoChenGuang AI Soul System")
-
+# ✅ 設定跨來源資源共享（CORS）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://ai.dreamground.net",   # Cloudflare Pages 前端網址
+        "https://ai2.dreamground.net",  # 後端自己的網址
+        "https://*.pages.dev"           # Cloudflare 預設部署子網域（保險用）
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(chat_router, prefix="/api", tags=["Chat"])
-app.include_router(memory_router, prefix="/api", tags=["Memory"])
-app.include_router(upload_router, prefix="/api", tags=["Upload"])
+# 註冊各個 API 路由
+app.include_router(health_router, prefix="/api")
+app.include_router(chat_router, prefix="/api")
+app.include_router(memory_router, prefix="/api")
+app.include_router(openai_router, prefix="/api")
+app.include_router(file_upload_router, prefix="/api")
 
+# 根路由檢查是否運行中
 @app.get("/")
 async def root():
-    return {"message": "XiaoChenGuang AI Soul System API", "status": "running"}
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
+    return {
+        "message": "小晨光 AI 靈魂系統 Bot",
+        "version": "1.0.0",
+        "status": "running"
+    }
 
 if __name__ == "__main__":
+    import os
     import uvicorn
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="localhost", port=port)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
